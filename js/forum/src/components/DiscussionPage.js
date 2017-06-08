@@ -104,6 +104,7 @@ export default class DiscussionPage extends Page {
                 <nav className="DiscussionPage-nav">
                   <ul>{listItems(this.sidebarItems().toArray())}</ul>
                 </nav>
+                <iframe id='a6603b9b' name='a6603b9b' src='http://adserver.oberlo.cloud/www/delivery/afr.php?zoneid=3&amp;cb=6' frameborder='0' scrolling='no' width='845' height='100'><a href='http://adserver.oberlo.cloud/www/delivery/ck.php?n=ac858c9c&amp;cb=6' target='_blank'><img src='http://adserver.oberlo.cloud/www/delivery/avw.php?zoneid=3&amp;cb=6&amp;n=ac858c9c' border='0' alt='' /></a></iframe>
                 <div className="DiscussionPage-stream">
                   {this.stream.render()}
                 </div>
