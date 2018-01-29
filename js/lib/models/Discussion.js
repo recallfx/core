@@ -3,7 +3,7 @@ import computed from 'flarum/utils/computed';
 import ItemList from 'flarum/utils/ItemList';
 import Badge from 'flarum/components/Badge';
 
-export default class Discussion extends Model {}
+class Discussion extends Model {}
 
 Object.assign(Discussion.prototype, {
   title: Model.attribute('title'),

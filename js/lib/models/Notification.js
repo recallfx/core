@@ -1,7 +1,7 @@
 import Model from 'flarum/Model';
 import computed from 'flarum/utils/computed';
 
-export default class Notification extends Model {}
+class Notification extends Model {}
 
 Object.assign(Notification.prototype, {
   contentType: Model.attribute('contentType'),

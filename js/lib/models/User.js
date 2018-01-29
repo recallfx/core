@@ -6,7 +6,7 @@ import ItemList from 'flarum/utils/ItemList';
 import computed from 'flarum/utils/computed';
 import GroupBadge from 'flarum/components/GroupBadge';
 
-export default class User extends Model {}
+class User extends Model {}
 
 Object.assign(User.prototype, {
   username: Model.attribute('username'),
