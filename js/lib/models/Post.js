@@ -2,7 +2,7 @@ import Model from 'flarum/Model';
 import computed from 'flarum/utils/computed';
 import { getPlainContent } from 'flarum/utils/string';
 
-export default class Post extends Model {}
+class Post extends Model {}
 
 Object.assign(Post.prototype, {
   number: Model.attribute('number'),
