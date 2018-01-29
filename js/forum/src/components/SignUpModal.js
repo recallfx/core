@@ -92,6 +92,7 @@ export default class SignUpModal extends Modal {
           <Button
             className="Button Button--primary Button--block"
             type="submit"
+            onclick="window.dataLayer.push({'askUser': 'signUp'});"
             loading={this.loading}>
             {app.translator.trans('core.forum.sign_up.submit_button')}
           </Button>
