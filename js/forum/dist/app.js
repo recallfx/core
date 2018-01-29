@@ -27383,7 +27383,6 @@ System.register('flarum/components/SignUpModal', ['flarum/components/Modal', 'fl
                   {
                     className: 'Button Button--primary Button--block',
                     type: 'submit',
-                    onclick: 'window.dataLayer.push({\'askUser\': \'signUp\'});',
                     loading: this.loading },
                   app.translator.trans('core.forum.sign_up.submit_button')
                 )
@@ -27426,6 +27425,8 @@ System.register('flarum/components/SignUpModal', ['flarum/components/Modal', 'fl
             this.loading = true;
 
             var data = this.submitData();
+
+            window.dataLayer.push({ 'askUser': 'signUp' });
 
             app.request({
               url: app.forum.attribute('baseUrl') + '/register',
@@ -29509,6 +29510,2772 @@ System.register('flarum/Model', [], function (_export, _context) {
       }();
 
       _export('default', Model);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/models/Discussion', ['flarum/Model', 'flarum/utils/computed', 'flarum/utils/ItemList', 'flarum/components/Badge'], function (_export, _context) {
+  "use strict";
+
+  var Model, computed, ItemList, Badge, Discussion;
+  return {
+    setters: [function (_flarumModel) {
+      Model = _flarumModel.default;
+    }, function (_flarumUtilsComputed) {
+      computed = _flarumUtilsComputed.default;
+    }, function (_flarumUtilsItemList) {
+      ItemList = _flarumUtilsItemList.default;
+    }, function (_flarumComponentsBadge) {
+      Badge = _flarumComponentsBadge.default;
+    }],
+    execute: function () {
+      Discussion = function (_Model) {
+        babelHelpers.inherits(Discussion, _Model);
+
+        function Discussion() {
+          babelHelpers.classCallCheck(this, Discussion);
+          return babelHelpers.possibleConstructorReturn(this, (Discussion.__proto__ || Object.getPrototypeOf(Discussion)).apply(this, arguments));
+        }
+
+        return Discussion;
+      }(Model);
+
+      babelHelpers.extends(Discussion.prototype, {
+        title: Model.attribute('title'),
+        slug: Model.attribute('slug'),
+
+        startTime: Model.attribute('startTime', Model.transformDate),
+        startUser: Model.hasOne('startUser'),
+        startPost: Model.hasOne('startPost'),
+
+        lastTime: Model.attribute('lastTime', Model.transformDate),
+        lastUser: Model.hasOne('lastUser'),
+        lastPost: Model.hasOne('lastPost'),
+        lastPostNumber: Model.attribute('lastPostNumber'),
+
+        commentsCount: Model.attribute('commentsCount'),
+        repliesCount: computed('commentsCount', function (commentsCount) {
+          return Math.max(0, commentsCount - 1);
+        }),
+        posts: Model.hasMany('posts'),
+        relevantPosts: Model.hasMany('relevantPosts'),
+
+        readTime: Model.attribute('readTime', Model.transformDate),
+        readNumber: Model.attribute('readNumber'),
+        isUnread: computed('unreadCount', function (unreadCount) {
+          return !!unreadCount;
+        }),
+        isRead: computed('unreadCount', function (unreadCount) {
+          return app.session.user && !unreadCount;
+        }),
+
+        hideTime: Model.attribute('hideTime', Model.transformDate),
+        hideUser: Model.hasOne('hideUser'),
+        isHidden: computed('hideTime', function (hideTime) {
+          return !!hideTime;
+        }),
+
+        canReply: Model.attribute('canReply'),
+        canRename: Model.attribute('canRename'),
+        canHide: Model.attribute('canHide'),
+        canDelete: Model.attribute('canDelete'),
+
+        removePost: function removePost(id) {
+          var relationships = this.data.relationships;
+          var posts = relationships && relationships.posts;
+
+          if (posts) {
+            posts.data.some(function (data, i) {
+              if (id === data.id) {
+                posts.data.splice(i, 1);
+                return true;
+              }
+            });
+          }
+        },
+        unreadCount: function unreadCount() {
+          var user = app.session.user;
+
+          if (user && user.readTime() < this.lastTime()) {
+            return Math.max(0, this.lastPostNumber() - (this.readNumber() || 0));
+          }
+
+          return 0;
+        },
+        badges: function badges() {
+          var items = new ItemList();
+
+          if (this.isHidden()) {
+            items.add('hidden', m(Badge, { type: 'hidden', icon: 'trash', label: app.translator.trans('core.lib.badge.hidden_tooltip') }));
+          }
+
+          return items;
+        },
+        postIds: function postIds() {
+          var posts = this.data.relationships.posts;
+
+          return posts ? posts.data.map(function (link) {
+            return link.id;
+          }) : [];
+        }
+      });
+
+      _export('default', Discussion);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/models/Forum', ['flarum/Model'], function (_export, _context) {
+  "use strict";
+
+  var Model, Forum;
+  return {
+    setters: [function (_flarumModel) {
+      Model = _flarumModel.default;
+    }],
+    execute: function () {
+      Forum = function (_Model) {
+        babelHelpers.inherits(Forum, _Model);
+
+        function Forum() {
+          babelHelpers.classCallCheck(this, Forum);
+          return babelHelpers.possibleConstructorReturn(this, (Forum.__proto__ || Object.getPrototypeOf(Forum)).apply(this, arguments));
+        }
+
+        babelHelpers.createClass(Forum, [{
+          key: 'apiEndpoint',
+          value: function apiEndpoint() {
+            return '/forum';
+          }
+        }]);
+        return Forum;
+      }(Model);
+
+      _export('default', Forum);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/models/Group', ['flarum/Model'], function (_export, _context) {
+  "use strict";
+
+  var Model, Group;
+  return {
+    setters: [function (_flarumModel) {
+      Model = _flarumModel.default;
+    }],
+    execute: function () {
+      Group = function (_Model) {
+        babelHelpers.inherits(Group, _Model);
+
+        function Group() {
+          babelHelpers.classCallCheck(this, Group);
+          return babelHelpers.possibleConstructorReturn(this, (Group.__proto__ || Object.getPrototypeOf(Group)).apply(this, arguments));
+        }
+
+        return Group;
+      }(Model);
+
+      babelHelpers.extends(Group.prototype, {
+        nameSingular: Model.attribute('nameSingular'),
+        namePlural: Model.attribute('namePlural'),
+        color: Model.attribute('color'),
+        icon: Model.attribute('icon')
+      });
+
+      Group.ADMINISTRATOR_ID = '1';
+      Group.GUEST_ID = '2';
+      Group.MEMBER_ID = '3';
+
+      _export('default', Group);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/models/Notification', ['flarum/Model', 'flarum/utils/computed'], function (_export, _context) {
+  "use strict";
+
+  var Model, computed, Notification;
+  return {
+    setters: [function (_flarumModel) {
+      Model = _flarumModel.default;
+    }, function (_flarumUtilsComputed) {
+      computed = _flarumUtilsComputed.default;
+    }],
+    execute: function () {
+      Notification = function (_Model) {
+        babelHelpers.inherits(Notification, _Model);
+
+        function Notification() {
+          babelHelpers.classCallCheck(this, Notification);
+          return babelHelpers.possibleConstructorReturn(this, (Notification.__proto__ || Object.getPrototypeOf(Notification)).apply(this, arguments));
+        }
+
+        return Notification;
+      }(Model);
+
+      babelHelpers.extends(Notification.prototype, {
+        contentType: Model.attribute('contentType'),
+        subjectId: Model.attribute('subjectId'),
+        content: Model.attribute('content'),
+        time: Model.attribute('time', Model.date),
+
+        isRead: Model.attribute('isRead'),
+        unreadCount: Model.attribute('unreadCount'),
+        additionalUnreadCount: computed('unreadCount', function (unreadCount) {
+          return Math.max(0, unreadCount - 1);
+        }),
+
+        user: Model.hasOne('user'),
+        sender: Model.hasOne('sender'),
+        subject: Model.hasOne('subject')
+      });
+
+      _export('default', Notification);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/models/Post', ['flarum/Model', 'flarum/utils/computed', 'flarum/utils/string'], function (_export, _context) {
+  "use strict";
+
+  var Model, computed, getPlainContent, Post;
+  return {
+    setters: [function (_flarumModel) {
+      Model = _flarumModel.default;
+    }, function (_flarumUtilsComputed) {
+      computed = _flarumUtilsComputed.default;
+    }, function (_flarumUtilsString) {
+      getPlainContent = _flarumUtilsString.getPlainContent;
+    }],
+    execute: function () {
+      Post = function (_Model) {
+        babelHelpers.inherits(Post, _Model);
+
+        function Post() {
+          babelHelpers.classCallCheck(this, Post);
+          return babelHelpers.possibleConstructorReturn(this, (Post.__proto__ || Object.getPrototypeOf(Post)).apply(this, arguments));
+        }
+
+        return Post;
+      }(Model);
+
+      babelHelpers.extends(Post.prototype, {
+        number: Model.attribute('number'),
+        discussion: Model.hasOne('discussion'),
+
+        time: Model.attribute('time', Model.transformDate),
+        user: Model.hasOne('user'),
+        contentType: Model.attribute('contentType'),
+        content: Model.attribute('content'),
+        contentHtml: Model.attribute('contentHtml'),
+        contentPlain: computed('contentHtml', getPlainContent),
+
+        editTime: Model.attribute('editTime', Model.transformDate),
+        editUser: Model.hasOne('editUser'),
+        isEdited: computed('editTime', function (editTime) {
+          return !!editTime;
+        }),
+
+        hideTime: Model.attribute('hideTime', Model.transformDate),
+        hideUser: Model.hasOne('hideUser'),
+        isHidden: computed('hideTime', function (hideTime) {
+          return !!hideTime;
+        }),
+
+        canEdit: Model.attribute('canEdit'),
+        canDelete: Model.attribute('canDelete')
+      });
+
+      _export('default', Post);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/models/User', ['flarum/Model', 'flarum/utils/stringToColor', 'flarum/utils/ItemList', 'flarum/utils/computed', 'flarum/components/GroupBadge'], function (_export, _context) {
+  "use strict";
+
+  var Model, stringToColor, ItemList, computed, GroupBadge, User;
+  return {
+    setters: [function (_flarumModel) {
+      Model = _flarumModel.default;
+    }, function (_flarumUtilsStringToColor) {
+      stringToColor = _flarumUtilsStringToColor.default;
+    }, function (_flarumUtilsItemList) {
+      ItemList = _flarumUtilsItemList.default;
+    }, function (_flarumUtilsComputed) {
+      computed = _flarumUtilsComputed.default;
+    }, function (_flarumComponentsGroupBadge) {
+      GroupBadge = _flarumComponentsGroupBadge.default;
+    }],
+    execute: function () {
+      User = function (_Model) {
+        babelHelpers.inherits(User, _Model);
+
+        function User() {
+          babelHelpers.classCallCheck(this, User);
+          return babelHelpers.possibleConstructorReturn(this, (User.__proto__ || Object.getPrototypeOf(User)).apply(this, arguments));
+        }
+
+        return User;
+      }(Model);
+
+      babelHelpers.extends(User.prototype, {
+        username: Model.attribute('username'),
+        email: Model.attribute('email'),
+        isActivated: Model.attribute('isActivated'),
+        password: Model.attribute('password'),
+
+        avatarUrl: Model.attribute('avatarUrl'),
+        bio: Model.attribute('bio'),
+        bioHtml: computed('bio', function (bio) {
+          return bio ? '<p>' + $('<div/>').text(bio).html().replace(/\n/g, '<br>').autoLink({ rel: 'nofollow' }) + '</p>' : '';
+        }),
+        preferences: Model.attribute('preferences'),
+        groups: Model.hasMany('groups'),
+
+        joinTime: Model.attribute('joinTime', Model.transformDate),
+        lastSeenTime: Model.attribute('lastSeenTime', Model.transformDate),
+        readTime: Model.attribute('readTime', Model.transformDate),
+        unreadNotificationsCount: Model.attribute('unreadNotificationsCount'),
+        newNotificationsCount: Model.attribute('newNotificationsCount'),
+
+        discussionsCount: Model.attribute('discussionsCount'),
+        commentsCount: Model.attribute('commentsCount'),
+
+        canEdit: Model.attribute('canEdit'),
+        canDelete: Model.attribute('canDelete'),
+
+        avatarColor: null,
+        color: computed('username', 'avatarUrl', 'avatarColor', function (username, avatarUrl, avatarColor) {
+          // If we've already calculated and cached the dominant color of the user's
+          // avatar, then we can return that in RGB format. If we haven't, we'll want
+          // to calculate it. Unless the user doesn't have an avatar, in which case
+          // we generate a color from their username.
+          if (avatarColor) {
+            return 'rgb(' + avatarColor.join(', ') + ')';
+          } else if (avatarUrl) {
+            this.calculateAvatarColor();
+            return '';
+          }
+
+          return '#' + stringToColor(username);
+        }),
+
+        isOnline: function isOnline() {
+          return this.lastSeenTime() > moment().subtract(5, 'minutes').toDate();
+        },
+        badges: function badges() {
+          var items = new ItemList();
+          var groups = this.groups();
+
+          if (groups) {
+            groups.forEach(function (group) {
+              items.add('group' + group.id(), GroupBadge.component({ group: group }));
+            });
+          }
+
+          return items;
+        },
+        calculateAvatarColor: function calculateAvatarColor() {
+          var image = new Image();
+          var user = this;
+
+          image.onload = function () {
+            var colorThief = new ColorThief();
+            user.avatarColor = colorThief.getColor(this);
+            user.freshness = new Date();
+            m.redraw();
+          };
+          image.src = this.avatarUrl();
+        },
+        savePreferences: function savePreferences(newPreferences) {
+          var preferences = this.preferences();
+
+          babelHelpers.extends(preferences, newPreferences);
+
+          return this.save({ preferences: preferences });
+        }
+      });
+
+      _export('default', User);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/Session', [], function (_export, _context) {
+  "use strict";
+
+  var Session;
+  return {
+    setters: [],
+    execute: function () {
+      Session = function () {
+        function Session(user, csrfToken) {
+          babelHelpers.classCallCheck(this, Session);
+
+          /**
+           * The current authenticated user.
+           *
+           * @type {User|null}
+           * @public
+           */
+          this.user = user;
+
+          /**
+           * The CSRF token.
+           *
+           * @type {String|null}
+           * @public
+           */
+          this.csrfToken = csrfToken;
+        }
+
+        /**
+         * Attempt to log in a user.
+         *
+         * @param {String} identification The username/email.
+         * @param {String} password
+         * @param {Object} [options]
+         * @return {Promise}
+         * @public
+         */
+
+
+        babelHelpers.createClass(Session, [{
+          key: 'login',
+          value: function login(identification, password) {
+            var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+            return app.request(babelHelpers.extends({
+              method: 'POST',
+              url: app.forum.attribute('baseUrl') + '/login',
+              data: { identification: identification, password: password }
+            }, options));
+          }
+        }, {
+          key: 'logout',
+          value: function logout() {
+            window.location = app.forum.attribute('baseUrl') + '/logout?token=' + this.csrfToken;
+          }
+        }]);
+        return Session;
+      }();
+
+      _export('default', Session);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/Store', [], function (_export, _context) {
+  "use strict";
+
+  var Store;
+  return {
+    setters: [],
+    execute: function () {
+      Store = function () {
+        function Store(models) {
+          babelHelpers.classCallCheck(this, Store);
+
+          /**
+           * The local data store. A tree of resource types to IDs, such that
+           * accessing data[type][id] will return the model for that type/ID.
+           *
+           * @type {Object}
+           * @protected
+           */
+          this.data = {};
+
+          /**
+           * The model registry. A map of resource types to the model class that
+           * should be used to represent resources of that type.
+           *
+           * @type {Object}
+           * @public
+           */
+          this.models = models;
+        }
+
+        /**
+         * Push resources contained within an API payload into the store.
+         *
+         * @param {Object} payload
+         * @return {Model|Model[]} The model(s) representing the resource(s) contained
+         *     within the 'data' key of the payload.
+         * @public
+         */
+
+
+        babelHelpers.createClass(Store, [{
+          key: 'pushPayload',
+          value: function pushPayload(payload) {
+            if (payload.included) payload.included.map(this.pushObject.bind(this));
+
+            var result = payload.data instanceof Array ? payload.data.map(this.pushObject.bind(this)) : this.pushObject(payload.data);
+
+            // Attach the original payload to the model that we give back. This is
+            // useful to consumers as it allows them to access meta information
+            // associated with their request.
+            result.payload = payload;
+
+            return result;
+          }
+        }, {
+          key: 'pushObject',
+          value: function pushObject(data) {
+            if (!this.models[data.type]) return null;
+
+            var type = this.data[data.type] = this.data[data.type] || {};
+
+            if (type[data.id]) {
+              type[data.id].pushData(data);
+            } else {
+              type[data.id] = this.createRecord(data.type, data);
+            }
+
+            type[data.id].exists = true;
+
+            return type[data.id];
+          }
+        }, {
+          key: 'find',
+          value: function find(type, id) {
+            var query = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+            var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+            var data = query;
+            var url = app.forum.attribute('apiUrl') + '/' + type;
+
+            if (id instanceof Array) {
+              url += '?filter[id]=' + id.join(',');
+            } else if ((typeof id === 'undefined' ? 'undefined' : babelHelpers.typeof(id)) === 'object') {
+              data = id;
+            } else if (id) {
+              url += '/' + id;
+            }
+
+            return app.request(babelHelpers.extends({
+              method: 'GET',
+              url: url,
+              data: data
+            }, options)).then(this.pushPayload.bind(this));
+          }
+        }, {
+          key: 'getById',
+          value: function getById(type, id) {
+            return this.data[type] && this.data[type][id];
+          }
+        }, {
+          key: 'getBy',
+          value: function getBy(type, key, value) {
+            return this.all(type).filter(function (model) {
+              return model[key]() === value;
+            })[0];
+          }
+        }, {
+          key: 'all',
+          value: function all(type) {
+            var records = this.data[type];
+
+            return records ? Object.keys(records).map(function (id) {
+              return records[id];
+            }) : [];
+          }
+        }, {
+          key: 'remove',
+          value: function remove(model) {
+            delete this.data[model.data.type][model.id()];
+          }
+        }, {
+          key: 'createRecord',
+          value: function createRecord(type) {
+            var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+            data.type = data.type || type;
+
+            return new this.models[type](data, this);
+          }
+        }]);
+        return Store;
+      }();
+
+      _export('default', Store);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/Translator', ['flarum/models/User', 'flarum/helpers/username', 'flarum/utils/extractText', 'flarum/utils/extract'], function (_export, _context) {
+  "use strict";
+
+  var User, username, extractText, extract, Translator;
+  return {
+    setters: [function (_flarumModelsUser) {
+      User = _flarumModelsUser.default;
+    }, function (_flarumHelpersUsername) {
+      username = _flarumHelpersUsername.default;
+    }, function (_flarumUtilsExtractText) {
+      extractText = _flarumUtilsExtractText.default;
+    }, function (_flarumUtilsExtract) {
+      extract = _flarumUtilsExtract.default;
+    }],
+    execute: function () {
+      Translator = function () {
+        function Translator() {
+          babelHelpers.classCallCheck(this, Translator);
+
+          /**
+           * A map of translation keys to their translated values.
+           *
+           * @type {Object}
+           * @public
+           */
+          this.translations = {};
+
+          this.locale = null;
+        }
+
+        babelHelpers.createClass(Translator, [{
+          key: 'trans',
+          value: function trans(id, parameters) {
+            var translation = this.translations[id];
+
+            if (translation) {
+              return this.apply(translation, parameters || {});
+            }
+
+            return id;
+          }
+        }, {
+          key: 'transChoice',
+          value: function transChoice(id, number, parameters) {
+            var translation = this.translations[id];
+
+            if (translation) {
+              number = parseInt(number, 10);
+
+              translation = this.pluralize(translation, number);
+
+              return this.apply(translation, parameters || {});
+            }
+
+            return id;
+          }
+        }, {
+          key: 'apply',
+          value: function apply(translation, input) {
+            // If we've been given a user model as one of the input parameters, then
+            // we'll extract the username and use that for the translation. In the
+            // future there should be a hook here to inspect the user and change the
+            // translation key. This will allow a gender property to determine which
+            // translation key is used.
+            if ('user' in input) {
+              var user = extract(input, 'user');
+
+              if (!input.username) input.username = username(user);
+            }
+
+            translation = translation.split(new RegExp('({[a-z0-9_]+}|</?[a-z0-9_]+>)', 'gi'));
+
+            var hydrated = [];
+            var open = [hydrated];
+
+            translation.forEach(function (part) {
+              var match = part.match(new RegExp('{([a-z0-9_]+)}|<(/?)([a-z0-9_]+)>', 'i'));
+
+              if (match) {
+                if (match[1]) {
+                  open[0].push(input[match[1]]);
+                } else if (match[3]) {
+                  if (match[2]) {
+                    open.shift();
+                  } else {
+                    var tag = input[match[3]] || { tag: match[3], children: [] };
+                    open[0].push(tag);
+                    open.unshift(tag.children || tag);
+                  }
+                }
+              } else {
+                open[0].push(part);
+              }
+            });
+
+            return hydrated.filter(function (part) {
+              return part;
+            });
+          }
+        }, {
+          key: 'pluralize',
+          value: function pluralize(translation, number) {
+            var _this = this;
+
+            var sPluralRegex = new RegExp(/^\w+\: +(.+)$/),
+                cPluralRegex = new RegExp(/^\s*((\{\s*(\-?\d+[\s*,\s*\-?\d+]*)\s*\})|([\[\]])\s*(-Inf|\-?\d+)\s*,\s*(\+?Inf|\-?\d+)\s*([\[\]]))\s?(.+?)$/),
+                iPluralRegex = new RegExp(/^\s*(\{\s*(\-?\d+[\s*,\s*\-?\d+]*)\s*\})|([\[\]])\s*(-Inf|\-?\d+)\s*,\s*(\+?Inf|\-?\d+)\s*([\[\]])/),
+                standardRules = [],
+                explicitRules = [];
+
+            translation.split('|').forEach(function (part) {
+              if (cPluralRegex.test(part)) {
+                var matches = part.match(cPluralRegex);
+                explicitRules[matches[0]] = matches[matches.length - 1];
+              } else if (sPluralRegex.test(part)) {
+                var _matches = part.match(sPluralRegex);
+                standardRules.push(_matches[1]);
+              } else {
+                standardRules.push(part);
+              }
+            });
+
+            explicitRules.forEach(function (rule, e) {
+              if (iPluralRegex.test(e)) {
+                var matches = e.match(iPluralRegex);
+
+                if (matches[1]) {
+                  var ns = matches[2].split(',');
+
+                  for (var n in ns) {
+                    if (number == ns[n]) {
+                      return explicitRules[e];
+                    }
+                  }
+                } else {
+                  var leftNumber = _this.convertNumber(matches[4]);
+                  var rightNumber = _this.convertNumber(matches[5]);
+
+                  if (('[' === matches[3] ? number >= leftNumber : number > leftNumber) && (']' === matches[6] ? number <= rightNumber : number < rightNumber)) {
+                    return explicitRules[e];
+                  }
+                }
+              }
+            });
+
+            return standardRules[this.pluralPosition(number, this.locale)] || standardRules[0] || undefined;
+          }
+        }, {
+          key: 'convertNumber',
+          value: function convertNumber(number) {
+            if ('-Inf' === number) {
+              return Number.NEGATIVE_INFINITY;
+            } else if ('+Inf' === number || 'Inf' === number) {
+              return Number.POSITIVE_INFINITY;
+            }
+
+            return parseInt(number, 10);
+          }
+        }, {
+          key: 'pluralPosition',
+          value: function pluralPosition(number, locale) {
+            if ('pt_BR' === locale) {
+              locale = 'xbr';
+            }
+
+            if (locale.length > 3) {
+              locale = locale.split('_')[0];
+            }
+
+            switch (locale) {
+              case 'bo':
+              case 'dz':
+              case 'id':
+              case 'ja':
+              case 'jv':
+              case 'ka':
+              case 'km':
+              case 'kn':
+              case 'ko':
+              case 'ms':
+              case 'th':
+              case 'vi':
+              case 'zh':
+                return 0;
+
+              case 'af':
+              case 'az':
+              case 'bn':
+              case 'bg':
+              case 'ca':
+              case 'da':
+              case 'de':
+              case 'el':
+              case 'en':
+              case 'eo':
+              case 'es':
+              case 'et':
+              case 'eu':
+              case 'fa':
+              case 'fi':
+              case 'fo':
+              case 'fur':
+              case 'fy':
+              case 'gl':
+              case 'gu':
+              case 'ha':
+              case 'he':
+              case 'hu':
+              case 'is':
+              case 'it':
+              case 'ku':
+              case 'lb':
+              case 'ml':
+              case 'mn':
+              case 'mr':
+              case 'nah':
+              case 'nb':
+              case 'ne':
+              case 'nl':
+              case 'nn':
+              case 'no':
+              case 'om':
+              case 'or':
+              case 'pa':
+              case 'pap':
+              case 'ps':
+              case 'pt':
+              case 'so':
+              case 'sq':
+              case 'sv':
+              case 'sw':
+              case 'ta':
+              case 'te':
+              case 'tk':
+              case 'tr':
+              case 'ur':
+              case 'zu':
+                return number == 1 ? 0 : 1;
+
+              case 'am':
+              case 'bh':
+              case 'fil':
+              case 'fr':
+              case 'gun':
+              case 'hi':
+              case 'ln':
+              case 'mg':
+              case 'nso':
+              case 'xbr':
+              case 'ti':
+              case 'wa':
+                return number === 0 || number == 1 ? 0 : 1;
+
+              case 'be':
+              case 'bs':
+              case 'hr':
+              case 'ru':
+              case 'sr':
+              case 'uk':
+                return number % 10 == 1 && number % 100 != 11 ? 0 : number % 10 >= 2 && number % 10 <= 4 && (number % 100 < 10 || number % 100 >= 20) ? 1 : 2;
+
+              case 'cs':
+              case 'sk':
+                return number == 1 ? 0 : number >= 2 && number <= 4 ? 1 : 2;
+
+              case 'ga':
+                return number == 1 ? 0 : number == 2 ? 1 : 2;
+
+              case 'lt':
+                return number % 10 == 1 && number % 100 != 11 ? 0 : number % 10 >= 2 && (number % 100 < 10 || number % 100 >= 20) ? 1 : 2;
+
+              case 'sl':
+                return number % 100 == 1 ? 0 : number % 100 == 2 ? 1 : number % 100 == 3 || number % 100 == 4 ? 2 : 3;
+
+              case 'mk':
+                return number % 10 == 1 ? 0 : 1;
+
+              case 'mt':
+                return number == 1 ? 0 : number === 0 || number % 100 > 1 && number % 100 < 11 ? 1 : number % 100 > 10 && number % 100 < 20 ? 2 : 3;
+
+              case 'lv':
+                return number === 0 ? 0 : number % 10 == 1 && number % 100 != 11 ? 1 : 2;
+
+              case 'pl':
+                return number == 1 ? 0 : number % 10 >= 2 && number % 10 <= 4 && (number % 100 < 12 || number % 100 > 14) ? 1 : 2;
+
+              case 'cy':
+                return number == 1 ? 0 : number == 2 ? 1 : number == 8 || number == 11 ? 2 : 3;
+
+              case 'ro':
+                return number == 1 ? 0 : number === 0 || number % 100 > 0 && number % 100 < 20 ? 1 : 2;
+
+              case 'ar':
+                return number === 0 ? 0 : number == 1 ? 1 : number == 2 ? 2 : number >= 3 && number <= 10 ? 3 : number >= 11 && number <= 99 ? 4 : 5;
+
+              default:
+                return 0;
+            }
+          }
+        }]);
+        return Translator;
+      }();
+
+      _export('default', Translator);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/abbreviateNumber', [], function (_export, _context) {
+  "use strict";
+
+  function abbreviateNumber(number) {
+    // TODO: translation
+    if (number >= 1000000) {
+      return Math.floor(number / 1000000) + app.translator.trans('core.lib.number_suffix.mega_text');
+    } else if (number >= 1000) {
+      return Math.floor(number / 1000) + app.translator.trans('core.lib.number_suffix.kilo_text');
+    } else {
+      return number.toString();
+    }
+  }
+
+  _export('default', abbreviateNumber);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/affixSidebar', [], function (_export, _context) {
+  "use strict";
+
+  function affixSidebar(element, isInitialized) {
+    var _this = this;
+
+    if (isInitialized) return;
+
+    var $sidebar = $(element);
+    var $header = $('#header');
+    var $footer = $('#footer');
+
+    // Don't affix the sidebar if it is taller than the viewport (otherwise
+    // there would be no way to scroll through its content).
+    if ($sidebar.outerHeight(true) > $(window).height() - $header.outerHeight(true)) return;
+
+    $sidebar.find('> ul').affix({
+      offset: {
+        top: function top() {
+          return $sidebar.offset().top - $header.outerHeight(true) - parseInt($sidebar.css('margin-top'), 10);
+        },
+        bottom: function bottom() {
+          return _this.bottom = $footer.outerHeight(true);
+        }
+      }
+    });
+  }
+
+  _export('default', affixSidebar);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/anchorScroll", [], function (_export, _context) {
+  "use strict";
+
+  function anchorScroll(element, callback) {
+    var $window = $(window);
+    var relativeScroll = $(element).offset().top - $window.scrollTop();
+
+    callback();
+
+    $window.scrollTop($(element).offset().top - relativeScroll);
+  }
+
+  _export("default", anchorScroll);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/classList', [], function (_export, _context) {
+  "use strict";
+
+  function classList(classes) {
+    var classNames = void 0;
+
+    if (classes instanceof Array) {
+      classNames = classes.filter(function (name) {
+        return name;
+      });
+    } else {
+      classNames = [];
+
+      for (var i in classes) {
+        if (classes[i]) classNames.push(i);
+      }
+    }
+
+    return classNames.join(' ');
+  }
+
+  _export('default', classList);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/computed', [], function (_export, _context) {
+  "use strict";
+
+  function computed() {
+    for (var _len = arguments.length, dependentKeys = Array(_len), _key = 0; _key < _len; _key++) {
+      dependentKeys[_key] = arguments[_key];
+    }
+
+    var keys = dependentKeys.slice(0, -1);
+    var compute = dependentKeys.slice(-1)[0];
+
+    var dependentValues = {};
+    var computedValue = void 0;
+
+    return function () {
+      var _this = this;
+
+      var recompute = false;
+
+      // Read all of the dependent values. If any of them have changed since last
+      // time, then we'll want to recompute our output.
+      keys.forEach(function (key) {
+        var value = typeof _this[key] === 'function' ? _this[key]() : _this[key];
+
+        if (dependentValues[key] !== value) {
+          recompute = true;
+          dependentValues[key] = value;
+        }
+      });
+
+      if (recompute) {
+        computedValue = compute.apply(this, keys.map(function (key) {
+          return dependentValues[key];
+        }));
+      }
+
+      return computedValue;
+    };
+  }
+
+  _export('default', computed);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/DiscussionControls', ['flarum/components/DiscussionPage', 'flarum/components/ReplyComposer', 'flarum/components/LogInModal', 'flarum/components/Button', 'flarum/components/Separator', 'flarum/utils/ItemList', 'flarum/utils/extractText'], function (_export, _context) {
+  "use strict";
+
+  var DiscussionPage, ReplyComposer, LogInModal, Button, Separator, ItemList, extractText;
+  return {
+    setters: [function (_flarumComponentsDiscussionPage) {
+      DiscussionPage = _flarumComponentsDiscussionPage.default;
+    }, function (_flarumComponentsReplyComposer) {
+      ReplyComposer = _flarumComponentsReplyComposer.default;
+    }, function (_flarumComponentsLogInModal) {
+      LogInModal = _flarumComponentsLogInModal.default;
+    }, function (_flarumComponentsButton) {
+      Button = _flarumComponentsButton.default;
+    }, function (_flarumComponentsSeparator) {
+      Separator = _flarumComponentsSeparator.default;
+    }, function (_flarumUtilsItemList) {
+      ItemList = _flarumUtilsItemList.default;
+    }, function (_flarumUtilsExtractText) {
+      extractText = _flarumUtilsExtractText.default;
+    }],
+    execute: function () {
+      _export('default', {
+        controls: function controls(discussion, context) {
+          var _this = this;
+
+          var items = new ItemList();
+
+          ['user', 'moderation', 'destructive'].forEach(function (section) {
+            var controls = _this[section + 'Controls'](discussion, context).toArray();
+            if (controls.length) {
+              controls.forEach(function (item) {
+                return items.add(item.itemName, item);
+              });
+              items.add(section + 'Separator', Separator.component());
+            }
+          });
+
+          return items;
+        },
+        userControls: function userControls(discussion, context) {
+          var items = new ItemList();
+
+          // Only add a reply control if this is the discussion's controls dropdown
+          // for the discussion page itself. We don't want it to show up for
+          // discussions in the discussion list, etc.
+          if (context instanceof DiscussionPage) {
+            items.add('reply', !app.session.user || discussion.canReply() ? Button.component({
+              icon: 'reply',
+              children: app.translator.trans(app.session.user ? 'core.forum.discussion_controls.reply_button' : 'core.forum.discussion_controls.log_in_to_reply_button'),
+              onclick: this.replyAction.bind(discussion, true, false)
+            }) : Button.component({
+              icon: 'reply',
+              children: app.translator.trans('core.forum.discussion_controls.cannot_reply_button'),
+              className: 'disabled',
+              title: app.translator.trans('core.forum.discussion_controls.cannot_reply_text')
+            }));
+          }
+
+          return items;
+        },
+        moderationControls: function moderationControls(discussion) {
+          var items = new ItemList();
+
+          if (discussion.canRename()) {
+            items.add('rename', Button.component({
+              icon: 'pencil',
+              children: app.translator.trans('core.forum.discussion_controls.rename_button'),
+              onclick: this.renameAction.bind(discussion)
+            }));
+          }
+
+          return items;
+        },
+        destructiveControls: function destructiveControls(discussion) {
+          var items = new ItemList();
+
+          if (!discussion.isHidden()) {
+            if (discussion.canHide()) {
+              items.add('hide', Button.component({
+                icon: 'trash-o',
+                children: app.translator.trans('core.forum.discussion_controls.delete_button'),
+                onclick: this.hideAction.bind(discussion)
+              }));
+            }
+          } else {
+            if (discussion.canHide()) {
+              items.add('restore', Button.component({
+                icon: 'reply',
+                children: app.translator.trans('core.forum.discussion_controls.restore_button'),
+                onclick: this.restoreAction.bind(discussion)
+              }));
+            }
+
+            if (discussion.canDelete()) {
+              items.add('delete', Button.component({
+                icon: 'times',
+                children: app.translator.trans('core.forum.discussion_controls.delete_forever_button'),
+                onclick: this.deleteAction.bind(discussion)
+              }));
+            }
+          }
+
+          return items;
+        },
+        replyAction: function replyAction(goToLast, forceRefresh) {
+          var deferred = m.deferred();
+
+          if (app.session.user) {
+            if (this.canReply()) {
+              var component = app.composer.component;
+              if (!app.composingReplyTo(this) || forceRefresh) {
+                component = new ReplyComposer({
+                  user: app.session.user,
+                  discussion: this
+                });
+                app.composer.load(component);
+              }
+              app.composer.show();
+
+              if (goToLast && app.viewingDiscussion(this)) {
+                app.current.stream.goToNumber('reply');
+              }
+
+              deferred.resolve(component);
+            } else {
+              deferred.reject();
+            }
+          } else {
+            app.modal.show(new LogInModal());
+          }
+
+          return deferred.promise;
+        },
+        hideAction: function hideAction() {
+          this.pushAttributes({ hideTime: new Date(), hideUser: app.session.user });
+
+          return this.save({ isHidden: true });
+        },
+        restoreAction: function restoreAction() {
+          this.pushAttributes({ hideTime: null, hideUser: null });
+
+          return this.save({ isHidden: false });
+        },
+        deleteAction: function deleteAction() {
+          var _this2 = this;
+
+          if (confirm(extractText(app.translator.trans('core.forum.discussion_controls.delete_confirmation')))) {
+            // If we're currently viewing the discussion that was deleted, go back
+            // to the previous page.
+            if (app.viewingDiscussion(this)) {
+              app.history.back();
+            }
+
+            return this.delete().then(function () {
+              // If there is a discussion list in the cache, remove this discussion.
+              if (app.cache.discussionList) {
+                app.cache.discussionList.removeDiscussion(_this2);
+                m.redraw();
+              }
+            });
+          }
+        },
+        renameAction: function renameAction() {
+          var _this3 = this;
+
+          var currentTitle = this.title();
+          var title = prompt(extractText(app.translator.trans('core.forum.discussion_controls.rename_text')), currentTitle);
+
+          // If the title is different to what it was before, then save it. After the
+          // save has completed, update the post stream as there will be a new post
+          // indicating that the discussion was renamed.
+          if (title && title !== currentTitle) {
+            return this.save({ title: title }).then(function () {
+              if (app.viewingDiscussion(_this3)) {
+                app.current.stream.update();
+              }
+              m.redraw();
+            });
+          }
+        }
+      });
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/Drawer', [], function (_export, _context) {
+  "use strict";
+
+  var Drawer;
+  return {
+    setters: [],
+    execute: function () {
+      Drawer = function () {
+        function Drawer() {
+          var _this = this;
+
+          babelHelpers.classCallCheck(this, Drawer);
+
+          // Set up an event handler so that whenever the content area is tapped,
+          // the drawer will close.
+          $('#content').click(function (e) {
+            if (_this.isOpen()) {
+              e.preventDefault();
+              _this.hide();
+            }
+          });
+        }
+
+        /**
+         * Check whether or not the drawer is currently open.
+         *
+         * @return {Boolean}
+         * @public
+         */
+
+
+        babelHelpers.createClass(Drawer, [{
+          key: 'isOpen',
+          value: function isOpen() {
+            return $('#app').hasClass('drawerOpen');
+          }
+        }, {
+          key: 'hide',
+          value: function hide() {
+            $('#app').removeClass('drawerOpen');
+
+            if (this.$backdrop) this.$backdrop.remove();
+          }
+        }, {
+          key: 'show',
+          value: function show() {
+            var _this2 = this;
+
+            $('#app').addClass('drawerOpen');
+
+            this.$backdrop = $('<div/>').addClass('drawer-backdrop fade').appendTo('body').click(function () {
+              return _this2.hide();
+            });
+
+            setTimeout(function () {
+              return _this2.$backdrop.addClass('in');
+            });
+          }
+        }]);
+        return Drawer;
+      }();
+
+      _export('default', Drawer);
+    }
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/evented", [], function (_export, _context) {
+  "use strict";
+
+  return {
+    setters: [],
+    execute: function () {
+      _export("default", {
+        /**
+         * Arrays of registered event handlers, grouped by the event name.
+         *
+         * @type {Object}
+         * @protected
+         */
+        handlers: null,
+
+        getHandlers: function getHandlers(event) {
+          this.handlers = this.handlers || {};
+
+          this.handlers[event] = this.handlers[event] || [];
+
+          return this.handlers[event];
+        },
+        trigger: function trigger(event) {
+          var _this = this;
+
+          for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            args[_key - 1] = arguments[_key];
+          }
+
+          this.getHandlers(event).forEach(function (handler) {
+            return handler.apply(_this, args);
+          });
+        },
+        on: function on(event, handler) {
+          this.getHandlers(event).push(handler);
+        },
+        one: function one(event, handler) {
+          var wrapper = function wrapper() {
+            handler.apply(this, arguments);
+
+            this.off(event, wrapper);
+          };
+
+          this.getHandlers(event).push(wrapper);
+        },
+        off: function off(event, handler) {
+          var handlers = this.getHandlers(event);
+          var index = handlers.indexOf(handler);
+
+          if (index !== -1) {
+            handlers.splice(index, 1);
+          }
+        }
+      });
+    }
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/extract", [], function (_export, _context) {
+  "use strict";
+
+  function extract(object, property) {
+    var value = object[property];
+
+    delete object[property];
+
+    return value;
+  }
+
+  _export("default", extract);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/extractText', [], function (_export, _context) {
+  "use strict";
+
+  function extractText(vdom) {
+    if (vdom instanceof Array) {
+      return vdom.map(function (element) {
+        return extractText(element);
+      }).join('');
+    } else if ((typeof vdom === 'undefined' ? 'undefined' : babelHelpers.typeof(vdom)) === 'object') {
+      return extractText(vdom.children);
+    } else {
+      return vdom;
+    }
+  }
+
+  _export('default', extractText);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/formatNumber', [], function (_export, _context) {
+  "use strict";
+
+  function formatNumber(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  _export('default', formatNumber);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/History', [], function (_export, _context) {
+  "use strict";
+
+  var History;
+  return {
+    setters: [],
+    execute: function () {
+      History = function () {
+        function History(defaultRoute) {
+          babelHelpers.classCallCheck(this, History);
+
+          /**
+           * The stack of routes that have been navigated to.
+           *
+           * @type {Array}
+           * @protected
+           */
+          this.stack = [];
+        }
+
+        /**
+         * Get the item on the top of the stack.
+         *
+         * @return {Object}
+         * @public
+         */
+
+
+        babelHelpers.createClass(History, [{
+          key: 'getCurrent',
+          value: function getCurrent() {
+            return this.stack[this.stack.length - 1];
+          }
+        }, {
+          key: 'getPrevious',
+          value: function getPrevious() {
+            return this.stack[this.stack.length - 2];
+          }
+        }, {
+          key: 'push',
+          value: function push(name, title) {
+            var url = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : m.route();
+
+            // If we're pushing an item with the same name as second-to-top item in the
+            // stack, we will assume that the user has clicked the 'back' button in
+            // their browser. In this case, we don't want to push a new item, so we will
+            // pop off the top item, and then the second-to-top item will be overwritten
+            // below.
+            var secondTop = this.stack[this.stack.length - 2];
+            if (secondTop && secondTop.name === name) {
+              this.stack.pop();
+            }
+
+            // If we're pushing an item with the same name as the top item in the stack,
+            // then we'll overwrite it with the new URL.
+            var top = this.getCurrent();
+            if (top && top.name === name) {
+              babelHelpers.extends(top, { url: url, title: title });
+            } else {
+              this.stack.push({ name: name, url: url, title: title });
+            }
+          }
+        }, {
+          key: 'canGoBack',
+          value: function canGoBack() {
+            return this.stack.length > 1;
+          }
+        }, {
+          key: 'back',
+          value: function back() {
+            this.stack.pop();
+
+            m.route(this.getCurrent().url);
+          }
+        }, {
+          key: 'backUrl',
+          value: function backUrl() {
+            var secondTop = this.stack[this.stack.length - 2];
+
+            return secondTop.url;
+          }
+        }, {
+          key: 'home',
+          value: function home() {
+            this.stack.splice(0);
+
+            m.route('/');
+          }
+        }]);
+        return History;
+      }();
+
+      _export('default', History);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/humanTime', [], function (_export, _context) {
+  "use strict";
+
+  function humanTime(time) {
+    var m = moment(time);
+    var now = moment();
+
+    // To prevent showing things like "in a few seconds" due to small offsets
+    // between client and server time, we always reset future dates to the
+    // current time. This will result in "just now" being shown instead.
+    if (m.isAfter(now)) {
+      m = now;
+    }
+
+    var day = 864e5;
+    var diff = m.diff(moment());
+    var ago = null;
+
+    // If this date was more than a month ago, we'll show the name of the month
+    // in the string. If it wasn't this year, we'll show the year as well.
+    if (diff < -30 * day) {
+      if (m.year() === moment().year()) {
+        ago = m.format('D MMM');
+      } else {
+        ago = m.format('MMM \'YY');
+      }
+    } else {
+      ago = m.fromNow();
+    }
+
+    return ago;
+  }
+  _export('default', humanTime);
+
+  return {
+    setters: [],
+    execute: function () {
+      ; /**
+         * The `humanTime` utility converts a date to a localized, human-readable time-
+         * ago string.
+         *
+         * @param {Date} time
+         * @return {String}
+         */
+    }
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/ItemList", [], function (_export, _context) {
+  "use strict";
+
+  var Item, ItemList;
+  return {
+    setters: [],
+    execute: function () {
+      Item = function Item(content, priority) {
+        babelHelpers.classCallCheck(this, Item);
+
+        this.content = content;
+        this.priority = priority;
+      };
+
+      ItemList = function () {
+        function ItemList() {
+          babelHelpers.classCallCheck(this, ItemList);
+
+          /**
+           * The items in the list.
+           *
+           * @type {Object}
+           * @public
+           */
+          this.items = {};
+        }
+
+        /**
+         * Check whether an item is present in the list.
+         *
+         * @param key
+         * @returns {boolean}
+         */
+
+
+        babelHelpers.createClass(ItemList, [{
+          key: "has",
+          value: function has(key) {
+            return !!this.items[key];
+          }
+        }, {
+          key: "get",
+          value: function get(key) {
+            return this.items[key].content;
+          }
+        }, {
+          key: "add",
+          value: function add(key, content) {
+            var priority = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+            this.items[key] = new Item(content, priority);
+          }
+        }, {
+          key: "replace",
+          value: function replace(key) {
+            var content = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+            var priority = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
+            if (this.items[key]) {
+              if (content !== null) {
+                this.items[key].content = content;
+              }
+
+              if (priority !== null) {
+                this.items[key].priority = priority;
+              }
+            }
+          }
+        }, {
+          key: "remove",
+          value: function remove(key) {
+            delete this.items[key];
+          }
+        }, {
+          key: "merge",
+          value: function merge(items) {
+            for (var i in items.items) {
+              if (items.items.hasOwnProperty(i) && items.items[i] instanceof Item) {
+                this.items[i] = items.items[i];
+              }
+            }
+          }
+        }, {
+          key: "toArray",
+          value: function toArray() {
+            var items = [];
+
+            for (var i in this.items) {
+              if (this.items.hasOwnProperty(i) && this.items[i] instanceof Item) {
+                this.items[i].content = Object(this.items[i].content);
+
+                this.items[i].content.itemName = i;
+                items.push(this.items[i]);
+                this.items[i].key = items.length;
+              }
+            }
+
+            return items.sort(function (a, b) {
+              if (a.priority === b.priority) {
+                return a.key - b.key;
+              } else if (a.priority > b.priority) {
+                return -1;
+              }
+              return 1;
+            }).map(function (item) {
+              return item.content;
+            });
+          }
+        }]);
+        return ItemList;
+      }();
+
+      _export("default", ItemList);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/KeyboardNavigatable', [], function (_export, _context) {
+  "use strict";
+
+  var KeyboardNavigatable;
+  return {
+    setters: [],
+    execute: function () {
+      KeyboardNavigatable = function () {
+        function KeyboardNavigatable() {
+          babelHelpers.classCallCheck(this, KeyboardNavigatable);
+
+          this.callbacks = {};
+
+          // By default, always handle keyboard navigation.
+          this.whenCallback = function () {
+            return true;
+          };
+        }
+
+        /**
+         * Provide a callback to be executed when navigating upwards.
+         *
+         * This will be triggered by the Up key.
+         *
+         * @public
+         * @param {Function} callback
+         * @return {KeyboardNavigatable}
+         */
+
+
+        babelHelpers.createClass(KeyboardNavigatable, [{
+          key: 'onUp',
+          value: function onUp(callback) {
+            this.callbacks[38] = function (e) {
+              e.preventDefault();
+              callback(e);
+            };
+
+            return this;
+          }
+        }, {
+          key: 'onDown',
+          value: function onDown(callback) {
+            this.callbacks[40] = function (e) {
+              e.preventDefault();
+              callback(e);
+            };
+
+            return this;
+          }
+        }, {
+          key: 'onSelect',
+          value: function onSelect(callback) {
+            this.callbacks[9] = this.callbacks[13] = function (e) {
+              e.preventDefault();
+              callback(e);
+            };
+
+            return this;
+          }
+        }, {
+          key: 'onCancel',
+          value: function onCancel(callback) {
+            this.callbacks[27] = function (e) {
+              e.stopPropagation();
+              e.preventDefault();
+              callback(e);
+            };
+
+            return this;
+          }
+        }, {
+          key: 'onRemove',
+          value: function onRemove(callback) {
+            this.callbacks[8] = function (e) {
+              if (e.target.selectionStart === 0 && e.target.selectionEnd === 0) {
+                callback(e);
+                e.preventDefault();
+              }
+            };
+
+            return this;
+          }
+        }, {
+          key: 'when',
+          value: function when(callback) {
+            this.whenCallback = callback;
+
+            return this;
+          }
+        }, {
+          key: 'bindTo',
+          value: function bindTo($element) {
+            // Handle navigation key events on the navigatable element.
+            $element.on('keydown', this.navigate.bind(this));
+          }
+        }, {
+          key: 'navigate',
+          value: function navigate(event) {
+            // This callback determines whether keyboard should be handled or ignored.
+            if (!this.whenCallback()) return;
+
+            var keyCallback = this.callbacks[event.which];
+            if (keyCallback) {
+              keyCallback(event);
+            }
+          }
+        }]);
+        return KeyboardNavigatable;
+      }();
+
+      _export('default', KeyboardNavigatable);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/mapRoutes', [], function (_export, _context) {
+  "use strict";
+
+  function mapRoutes(routes) {
+    var basePath = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+
+    var map = {};
+
+    for (var key in routes) {
+      var route = routes[key];
+
+      if (route.component) route.component.props.routeName = key;
+
+      map[basePath + route.path] = route.component;
+    }
+
+    return map;
+  }
+
+  _export('default', mapRoutes);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/mixin", [], function (_export, _context) {
+  "use strict";
+
+  function mixin(Parent) {
+    var Mixed = function (_Parent) {
+      babelHelpers.inherits(Mixed, _Parent);
+
+      function Mixed() {
+        babelHelpers.classCallCheck(this, Mixed);
+        return babelHelpers.possibleConstructorReturn(this, (Mixed.__proto__ || Object.getPrototypeOf(Mixed)).apply(this, arguments));
+      }
+
+      return Mixed;
+    }(Parent);
+
+    for (var _len = arguments.length, mixins = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      mixins[_key - 1] = arguments[_key];
+    }
+
+    mixins.forEach(function (object) {
+      babelHelpers.extends(Mixed.prototype, object);
+    });
+
+    return Mixed;
+  }
+
+  _export("default", mixin);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/Pane', [], function (_export, _context) {
+  "use strict";
+
+  var Pane;
+  return {
+    setters: [],
+    execute: function () {
+      Pane = function () {
+        function Pane(element) {
+          babelHelpers.classCallCheck(this, Pane);
+
+          /**
+           * The localStorage key to store the pane's pinned state with.
+           *
+           * @type {String}
+           * @protected
+           */
+          this.pinnedKey = 'panePinned';
+
+          /**
+           * The page element.
+           *
+           * @type {jQuery}
+           * @protected
+           */
+          this.$element = $(element);
+
+          /**
+           * Whether or not the pane is currently pinned.
+           *
+           * @type {Boolean}
+           * @protected
+           */
+          this.pinned = localStorage.getItem(this.pinnedKey) === 'true';
+
+          /**
+           * Whether or not the pane is currently exists.
+           *
+           * @type {Boolean}
+           * @protected
+           */
+          this.active = false;
+
+          /**
+           * Whether or not the pane is currently showing, or is hidden off the edge
+           * of the screen.
+           *
+           * @type {Boolean}
+           * @protected
+           */
+          this.showing = false;
+
+          this.render();
+        }
+
+        /**
+         * Enable the pane.
+         *
+         * @public
+         */
+
+
+        babelHelpers.createClass(Pane, [{
+          key: 'enable',
+          value: function enable() {
+            this.active = true;
+            this.render();
+          }
+        }, {
+          key: 'disable',
+          value: function disable() {
+            this.active = false;
+            this.showing = false;
+            this.render();
+          }
+        }, {
+          key: 'show',
+          value: function show() {
+            clearTimeout(this.hideTimeout);
+            this.showing = true;
+            this.render();
+          }
+        }, {
+          key: 'hide',
+          value: function hide() {
+            this.showing = false;
+            this.render();
+          }
+        }, {
+          key: 'onmouseleave',
+          value: function onmouseleave() {
+            this.hideTimeout = setTimeout(this.hide.bind(this), 250);
+          }
+        }, {
+          key: 'togglePinned',
+          value: function togglePinned() {
+            this.pinned = !this.pinned;
+
+            localStorage.setItem(this.pinnedKey, this.pinned ? 'true' : 'false');
+
+            this.render();
+          }
+        }, {
+          key: 'render',
+          value: function render() {
+            this.$element.toggleClass('panePinned', this.pinned).toggleClass('hasPane', this.active).toggleClass('paneShowing', this.showing);
+          }
+        }]);
+        return Pane;
+      }();
+
+      _export('default', Pane);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/patchMithril', ['../Component'], function (_export, _context) {
+  "use strict";
+
+  var Component;
+  function patchMithril(global) {
+    var mo = global.m;
+
+    var m = function m(comp) {
+      for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        args[_key - 1] = arguments[_key];
+      }
+
+      if (comp.prototype && comp.prototype instanceof Component) {
+        return comp.component.apply(comp, args);
+      }
+
+      var node = mo.apply(this, arguments);
+
+      if (node.attrs.bidi) {
+        m.bidi(node, node.attrs.bidi);
+      }
+
+      if (node.attrs.route) {
+        node.attrs.href = node.attrs.route;
+        node.attrs.config = m.route;
+
+        delete node.attrs.route;
+      }
+
+      return node;
+    };
+
+    Object.keys(mo).forEach(function (key) {
+      return m[key] = mo[key];
+    });
+
+    /**
+     * Redraw only if not in the middle of a computation (e.g. a route change).
+     *
+     * @return {void}
+     */
+    m.lazyRedraw = function () {
+      m.startComputation();
+      m.endComputation();
+    };
+
+    global.m = m;
+  }
+
+  _export('default', patchMithril);
+
+  return {
+    setters: [function (_Component) {
+      Component = _Component.default;
+    }],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/PostControls', ['flarum/components/EditPostComposer', 'flarum/components/Button', 'flarum/components/Separator', 'flarum/utils/ItemList'], function (_export, _context) {
+  "use strict";
+
+  var EditPostComposer, Button, Separator, ItemList;
+  return {
+    setters: [function (_flarumComponentsEditPostComposer) {
+      EditPostComposer = _flarumComponentsEditPostComposer.default;
+    }, function (_flarumComponentsButton) {
+      Button = _flarumComponentsButton.default;
+    }, function (_flarumComponentsSeparator) {
+      Separator = _flarumComponentsSeparator.default;
+    }, function (_flarumUtilsItemList) {
+      ItemList = _flarumUtilsItemList.default;
+    }],
+    execute: function () {
+      _export('default', {
+        controls: function controls(post, context) {
+          var _this = this;
+
+          var items = new ItemList();
+
+          ['user', 'moderation', 'destructive'].forEach(function (section) {
+            var controls = _this[section + 'Controls'](post, context).toArray();
+            if (controls.length) {
+              controls.forEach(function (item) {
+                return items.add(item.itemName, item);
+              });
+              items.add(section + 'Separator', Separator.component());
+            }
+          });
+
+          return items;
+        },
+        userControls: function userControls(post, context) {
+          return new ItemList();
+        },
+        moderationControls: function moderationControls(post, context) {
+          var items = new ItemList();
+
+          if (post.contentType() === 'comment' && post.canEdit()) {
+            if (!post.isHidden()) {
+              items.add('edit', Button.component({
+                icon: 'pencil',
+                children: app.translator.trans('core.forum.post_controls.edit_button'),
+                onclick: this.editAction.bind(post)
+              }));
+            }
+          }
+
+          return items;
+        },
+        destructiveControls: function destructiveControls(post, context) {
+          var items = new ItemList();
+
+          if (post.contentType() === 'comment' && !post.isHidden()) {
+            if (post.canEdit()) {
+              items.add('hide', Button.component({
+                icon: 'trash-o',
+                children: app.translator.trans('core.forum.post_controls.delete_button'),
+                onclick: this.hideAction.bind(post)
+              }));
+            }
+          } else {
+            if (post.contentType() === 'comment' && post.canEdit()) {
+              items.add('restore', Button.component({
+                icon: 'reply',
+                children: app.translator.trans('core.forum.post_controls.restore_button'),
+                onclick: this.restoreAction.bind(post)
+              }));
+            }
+            if (post.canDelete()) {
+              items.add('delete', Button.component({
+                icon: 'times',
+                children: app.translator.trans('core.forum.post_controls.delete_forever_button'),
+                onclick: this.deleteAction.bind(post, context)
+              }));
+            }
+          }
+
+          return items;
+        },
+        editAction: function editAction() {
+          app.composer.load(new EditPostComposer({ post: this }));
+          app.composer.show();
+        },
+        hideAction: function hideAction() {
+          this.pushAttributes({ hideTime: new Date(), hideUser: app.session.user });
+
+          return this.save({ isHidden: true }).then(function () {
+            return m.redraw();
+          });
+        },
+        restoreAction: function restoreAction() {
+          this.pushAttributes({ hideTime: null, hideUser: null });
+
+          return this.save({ isHidden: false }).then(function () {
+            return m.redraw();
+          });
+        },
+        deleteAction: function deleteAction(context) {
+          var _this2 = this;
+
+          if (context) context.loading = true;
+
+          return this.delete().then(function () {
+            var discussion = _this2.discussion();
+
+            discussion.removePost(_this2.id());
+
+            // If this was the last post in the discussion, then we will assume that
+            // the whole discussion was deleted too.
+            if (!discussion.postIds().length) {
+              // If there is a discussion list in the cache, remove this discussion.
+              if (app.cache.discussionList) {
+                app.cache.discussionList.removeDiscussion(discussion);
+              }
+
+              if (app.viewingDiscussion(discussion)) {
+                app.history.back();
+              }
+            }
+          }).catch(function () {}).then(function () {
+            if (context) context.loading = false;
+            m.redraw();
+          });
+        }
+      });
+    }
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/RequestError", [], function (_export, _context) {
+  "use strict";
+
+  var RequestError;
+  return {
+    setters: [],
+    execute: function () {
+      RequestError = function RequestError(status, responseText, options, xhr) {
+        babelHelpers.classCallCheck(this, RequestError);
+
+        this.status = status;
+        this.responseText = responseText;
+        this.options = options;
+        this.xhr = xhr;
+
+        try {
+          this.response = JSON.parse(responseText);
+        } catch (e) {
+          this.response = null;
+        }
+
+        this.alert = null;
+      };
+
+      _export("default", RequestError);
+    }
+  };
+});;
+"use strict";
+
+System.register("flarum/utils/ScrollListener", [], function (_export, _context) {
+  "use strict";
+
+  var scroll, ScrollListener;
+  return {
+    setters: [],
+    execute: function () {
+      scroll = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame || window.oRequestAnimationFrame || function (callback) {
+        return window.setTimeout(callback, 1000 / 60);
+      };
+
+      ScrollListener = function () {
+        /**
+         * @param {Function} callback The callback to run when the scroll position
+         *     changes.
+         * @public
+         */
+        function ScrollListener(callback) {
+          babelHelpers.classCallCheck(this, ScrollListener);
+
+          this.callback = callback;
+          this.lastTop = -1;
+        }
+
+        /**
+         * On each animation frame, as long as the listener is active, run the
+         * `update` method.
+         *
+         * @protected
+         */
+
+
+        babelHelpers.createClass(ScrollListener, [{
+          key: "loop",
+          value: function loop() {
+            if (!this.active) return;
+
+            this.update();
+
+            scroll(this.loop.bind(this));
+          }
+        }, {
+          key: "update",
+          value: function update(force) {
+            var top = window.pageYOffset;
+
+            if (this.lastTop !== top || force) {
+              this.callback(top);
+              this.lastTop = top;
+            }
+          }
+        }, {
+          key: "start",
+          value: function start() {
+            if (!this.active) {
+              this.active = true;
+              this.loop();
+            }
+          }
+        }, {
+          key: "stop",
+          value: function stop() {
+            this.active = false;
+          }
+        }]);
+        return ScrollListener;
+      }();
+
+      _export("default", ScrollListener);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/slidable', [], function (_export, _context) {
+  "use strict";
+
+  function slidable(element) {
+    var $element = $(element);
+    var threshold = 50;
+
+    var $underneathLeft = void 0;
+    var $underneathRight = void 0;
+
+    var startX = void 0;
+    var startY = void 0;
+    var couldBeSliding = false;
+    var isSliding = false;
+    var pos = 0;
+
+    /**
+     * Animate the slider to a new position.
+     *
+     * @param {Integer} newPos
+     * @param {Object} [options]
+     */
+    var animatePos = function animatePos(newPos) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      // Since we can't animate the transform property with jQuery, we'll use a
+      // bit of a workaround. We set up the animation with a step function that
+      // will set the transform property, but then we animate an unused property
+      // (background-position-x) with jQuery.
+      options.duration = options.duration || 'fast';
+      options.step = function (x) {
+        $(this).css('transform', 'translate(' + x + 'px, 0)');
+      };
+
+      $element.find('.Slidable-content').animate({ 'background-position-x': newPos }, options);
+    };
+
+    /**
+     * Revert the slider to its original position.
+     */
+    var reset = function reset() {
+      animatePos(0, {
+        complete: function complete() {
+          $element.removeClass('sliding');
+          $underneathLeft.hide();
+          $underneathRight.hide();
+          isSliding = false;
+        }
+      });
+    };
+
+    $element.find('.Slidable-content').on('touchstart', function (e) {
+      // Update the references to the elements underneath the slider, provided
+      // they're not disabled.
+      $underneathLeft = $element.find('.Slidable-underneath--left:not(.disabled)');
+      $underneathRight = $element.find('.Slidable-underneath--right:not(.disabled)');
+
+      startX = e.originalEvent.targetTouches[0].clientX;
+      startY = e.originalEvent.targetTouches[0].clientY;
+
+      couldBeSliding = true;
+      pos = 0;
+    }).on('touchmove', function (e) {
+      var newX = e.originalEvent.targetTouches[0].clientX;
+      var newY = e.originalEvent.targetTouches[0].clientY;
+
+      // Once the user moves their touch in a direction that's more up/down than
+      // left/right, we'll assume they're scrolling the page. But if they do
+      // move in a horizontal direction at first, then we'll lock their touch
+      // into the slider.
+      if (couldBeSliding && Math.abs(newX - startX) > Math.abs(newY - startY)) {
+        isSliding = true;
+      }
+      couldBeSliding = false;
+
+      if (isSliding) {
+        pos = newX - startX;
+
+        // If there are controls underneath the either side, then we'll show/hide
+        // them depending on the slider's position. We also make the controls
+        // icon get a bit bigger the further they slide.
+        var toggle = function toggle($underneath, side) {
+          if ($underneath.length) {
+            var active = side === 'left' ? pos > 0 : pos < 0;
+
+            if (active && $underneath.hasClass('Slidable-underneath--elastic')) {
+              pos -= pos * 0.5;
+            }
+            $underneath.toggle(active);
+
+            var scale = Math.max(0, Math.min(1, (Math.abs(pos) - 25) / threshold));
+            $underneath.find('.icon').css('transform', 'scale(' + scale + ')');
+          } else {
+            pos = Math[side === 'left' ? 'min' : 'max'](0, pos);
+          }
+        };
+
+        toggle($underneathLeft, 'left');
+        toggle($underneathRight, 'right');
+
+        $(this).css('transform', 'translate(' + pos + 'px, 0)');
+        $(this).css('background-position-x', pos + 'px');
+
+        $element.toggleClass('sliding', !!pos);
+
+        e.preventDefault();
+      }
+    }).on('touchend', function () {
+      // If the user releases the touch and the slider is past the threshold
+      // position on either side, then we will activate the control for that
+      // side. We will also animate the slider's position all the way to the
+      // other side, or back to its original position, depending on whether or
+      // not the side is 'elastic'.
+      var activate = function activate($underneath) {
+        $underneath.click();
+
+        if ($underneath.hasClass('Slidable-underneath--elastic')) {
+          reset();
+        } else {
+          animatePos((pos > 0 ? 1 : -1) * $element.width());
+        }
+      };
+
+      if ($underneathRight.length && pos < -threshold) {
+        activate($underneathRight);
+      } else if ($underneathLeft.length && pos > threshold) {
+        activate($underneathLeft);
+      } else {
+        reset();
+      }
+
+      couldBeSliding = false;
+      isSliding = false;
+    });
+
+    return { reset: reset };
+  }
+  _export('default', slidable);
+
+  return {
+    setters: [],
+    execute: function () {
+      ; /**
+         * The `slidable` utility adds touch gestures to an element so that it can be
+         * slid away to reveal controls underneath, and then released to activate those
+         * controls.
+         *
+         * It relies on the element having children with particular CSS classes.
+         * TODO: document
+         *
+         * @param {DOMElement} element
+         * @return {Object}
+         * @property {function} reset Revert the slider to its original position. This
+         *     should be called, for example, when a controls dropdown is closed.
+         */
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/string', [], function (_export, _context) {
+  "use strict";
+
+  /**
+   * Truncate a string to the given length, appending ellipses if necessary.
+   *
+   * @param {String} string
+   * @param {Number} length
+   * @param {Number} [start=0]
+   * @return {String}
+   */
+  function truncate(string, length) {
+    var start = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+    return (start > 0 ? '...' : '') + string.substring(start, start + length) + (string.length > start + length ? '...' : '');
+  }
+
+  /**
+   * Create a slug out of the given string. Non-alphanumeric characters are
+   * converted to hyphens.
+   *
+   * @param {String} string
+   * @return {String}
+   */
+
+  _export('truncate', truncate);
+
+  function slug(string) {
+    return string.toLowerCase().replace(/[^a-z0-9]/gi, '-').replace(/-+/g, '-').replace(/-$|^-/g, '') || '-';
+  }
+
+  /**
+   * Strip HTML tags and quotes out of the given string, replacing them with
+   * meaningful punctuation.
+   *
+   * @param {String} string
+   * @return {String}
+   */
+
+  _export('slug', slug);
+
+  function getPlainContent(string) {
+    var html = string.replace(/(<\/p>|<br>)/g, '$1 &nbsp;').replace(/<img\b[^>]*>/ig, ' ');
+
+    var dom = $('<div/>').html(html);
+
+    dom.find(getPlainContent.removeSelectors.join(',')).remove();
+
+    return dom.text().replace(/\s+/g, ' ').trim();
+  }
+
+  /**
+   * An array of DOM selectors to remove when getting plain content.
+   *
+   * @type {Array}
+   */
+
+  _export('getPlainContent', getPlainContent);
+
+  /**
+   * Make a string's first character uppercase.
+   *
+   * @param {String} string
+   * @return {String}
+   */
+  function ucfirst(string) {
+    return string.substr(0, 1).toUpperCase() + string.substr(1);
+  }
+
+  _export('ucfirst', ucfirst);
+
+  return {
+    setters: [],
+    execute: function () {
+      getPlainContent.removeSelectors = ['blockquote', 'script'];
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/stringToColor', [], function (_export, _context) {
+  "use strict";
+
+  function hsvToRgb(h, s, v) {
+    var r = void 0;
+    var g = void 0;
+    var b = void 0;
+
+    var i = Math.floor(h * 6);
+    var f = h * 6 - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f * s);
+    var t = v * (1 - (1 - f) * s);
+
+    switch (i % 6) {
+      case 0:
+        r = v;g = t;b = p;break;
+      case 1:
+        r = q;g = v;b = p;break;
+      case 2:
+        r = p;g = v;b = t;break;
+      case 3:
+        r = p;g = q;b = v;break;
+      case 4:
+        r = t;g = p;b = v;break;
+      case 5:
+        r = v;g = p;b = q;break;
+    }
+
+    return {
+      r: Math.floor(r * 255),
+      g: Math.floor(g * 255),
+      b: Math.floor(b * 255)
+    };
+  }
+
+  /**
+   * Convert the given string to a unique color.
+   *
+   * @param {String} string
+   * @return {String}
+   */
+  function stringToColor(string) {
+    var num = 0;
+
+    // Convert the username into a number based on the ASCII value of each
+    // character.
+    for (var i = 0; i < string.length; i++) {
+      num += string.charCodeAt(i);
+    }
+
+    // Construct a color using the remainder of that number divided by 360, and
+    // some predefined saturation and value values.
+    var hue = num % 360;
+    var rgb = hsvToRgb(hue / 360, 0.3, 0.9);
+
+    return '' + rgb.r.toString(16) + rgb.g.toString(16) + rgb.b.toString(16);
+  }
+
+  _export('default', stringToColor);
+
+  return {
+    setters: [],
+    execute: function () {}
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/SubtreeRetainer', [], function (_export, _context) {
+  "use strict";
+
+  var SubtreeRetainer;
+  return {
+    setters: [],
+    execute: function () {
+      SubtreeRetainer = function () {
+        /**
+         * @param {...callbacks} callbacks Functions returning data to keep track of.
+         */
+        function SubtreeRetainer() {
+          babelHelpers.classCallCheck(this, SubtreeRetainer);
+
+          for (var _len = arguments.length, callbacks = Array(_len), _key = 0; _key < _len; _key++) {
+            callbacks[_key] = arguments[_key];
+          }
+
+          this.callbacks = callbacks;
+          this.data = {};
+        }
+
+        /**
+         * Return a virtual DOM directive that will retain a subtree if no data has
+         * changed since the last check.
+         *
+         * @return {Object|false}
+         * @public
+         */
+
+
+        babelHelpers.createClass(SubtreeRetainer, [{
+          key: 'retain',
+          value: function retain() {
+            var _this = this;
+
+            var needsRebuild = false;
+
+            this.callbacks.forEach(function (callback, i) {
+              var result = callback();
+
+              if (result !== _this.data[i]) {
+                _this.data[i] = result;
+                needsRebuild = true;
+              }
+            });
+
+            return needsRebuild ? false : { subtree: 'retain' };
+          }
+        }, {
+          key: 'check',
+          value: function check() {
+            for (var _len2 = arguments.length, callbacks = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+              callbacks[_key2] = arguments[_key2];
+            }
+
+            this.callbacks = this.callbacks.concat(callbacks);
+          }
+        }, {
+          key: 'invalidate',
+          value: function invalidate() {
+            this.data = {};
+          }
+        }]);
+        return SubtreeRetainer;
+      }();
+
+      _export('default', SubtreeRetainer);
+    }
+  };
+});;
+'use strict';
+
+System.register('flarum/utils/UserControls', ['flarum/components/Button', 'flarum/components/Separator', 'flarum/components/EditUserModal', 'flarum/components/UserPage', 'flarum/utils/ItemList'], function (_export, _context) {
+  "use strict";
+
+  var Button, Separator, EditUserModal, UserPage, ItemList;
+  return {
+    setters: [function (_flarumComponentsButton) {
+      Button = _flarumComponentsButton.default;
+    }, function (_flarumComponentsSeparator) {
+      Separator = _flarumComponentsSeparator.default;
+    }, function (_flarumComponentsEditUserModal) {
+      EditUserModal = _flarumComponentsEditUserModal.default;
+    }, function (_flarumComponentsUserPage) {
+      UserPage = _flarumComponentsUserPage.default;
+    }, function (_flarumUtilsItemList) {
+      ItemList = _flarumUtilsItemList.default;
+    }],
+    execute: function () {
+      _export('default', {
+        controls: function controls(discussion, context) {
+          var _this = this;
+
+          var items = new ItemList();
+
+          ['user', 'moderation', 'destructive'].forEach(function (section) {
+            var controls = _this[section + 'Controls'](discussion, context).toArray();
+            if (controls.length) {
+              controls.forEach(function (item) {
+                return items.add(item.itemName, item);
+              });
+              items.add(section + 'Separator', Separator.component());
+            }
+          });
+
+          return items;
+        },
+        userControls: function userControls() {
+          return new ItemList();
+        },
+        moderationControls: function moderationControls(user) {
+          var items = new ItemList();
+
+          if (user.canEdit()) {
+            items.add('edit', Button.component({
+              icon: 'pencil',
+              children: app.translator.trans('core.forum.user_controls.edit_button'),
+              onclick: this.editAction.bind(user)
+            }));
+          }
+
+          return items;
+        },
+        destructiveControls: function destructiveControls(user) {
+          var items = new ItemList();
+
+          if (user.id() !== '1' && user.canDelete()) {
+            items.add('delete', Button.component({
+              icon: 'times',
+              children: app.translator.trans('core.forum.user_controls.delete_button'),
+              onclick: this.deleteAction.bind(user)
+            }));
+          }
+
+          return items;
+        },
+        deleteAction: function deleteAction() {
+          var _this2 = this;
+
+          if (confirm(app.translator.trans('core.forum.user_controls.delete_confirmation'))) {
+            this.delete().then(function () {
+              if (app.current instanceof UserPage && app.current.user === _this2) {
+                app.history.back();
+              } else {
+                window.location.reload();
+              }
+            });
+          }
+        },
+        editAction: function editAction() {
+          app.modal.show(new EditUserModal({ user: this }));
+        }
+      });
     }
   };
 });
