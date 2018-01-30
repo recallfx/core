@@ -27432,7 +27432,7 @@ System.register('flarum/components/SignUpModal', ['flarum/components/Modal', 'fl
               data: data,
               errorHandler: this.onerror.bind(this)
             }).then(function () {
-              window.Oberlo.push({ 'askUser': 'signUp' });
+              window.Oberlo.push({ 'askUser': 'signUp', 'event': 'askSignUp' });
               window.location.reload();
             }, this.loaded.bind(this));
           }
