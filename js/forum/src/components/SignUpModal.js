@@ -145,8 +145,10 @@ export default class SignUpModal extends Modal {
       method: 'POST',
       data,
       errorHandler: this.onerror.bind(this)
-    }).then(
-      () => window.location.reload(),
+    }).then(() => {
+      window.Oberlo.push({ 'askUser': 'signUp' });
+      window.location.reload();
+    },
       this.loaded.bind(this)
     );
   }

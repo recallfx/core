@@ -27434,7 +27434,8 @@ System.register('flarum/components/SignUpModal', ['flarum/components/Modal', 'fl
               data: data,
               errorHandler: this.onerror.bind(this)
             }).then(function () {
-              return window.location.reload();
+              window.Oberlo.push({ 'askUser': 'signUp' });
+              window.location.reload();
             }, this.loaded.bind(this));
           }
         }, {
