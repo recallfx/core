@@ -27426,8 +27426,6 @@ System.register('flarum/components/SignUpModal', ['flarum/components/Modal', 'fl
 
             var data = this.submitData();
 
-            window.dataLayer.push({ 'askUser': 'signUp' });
-
             app.request({
               url: app.forum.attribute('baseUrl') + '/register',
               method: 'POST',
