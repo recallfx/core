@@ -29,8 +29,8 @@ class IndexController extends WebAppController
      * @var array
      */
     private $sortMap = [
-        'top' => '-commentsCount',
         'latest' => '-lastTime',
+        'top' => '-commentsCount',
         'newest' => '-startTime',
         'oldest' => 'startTime'
     ];

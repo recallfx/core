@@ -22,7 +22,7 @@ class DiscussionSearch extends AbstractSearch
     /**
      * {@inheritdoc}
      */
-    protected $defaultSort = ['commentsCount' => 'desc'];
+    protected $defaultSort = ['lastTime' => 'desc'];
 
     /**
      * @var array

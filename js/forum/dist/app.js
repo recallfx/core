@@ -20912,8 +20912,8 @@ System.register('flarum/components/DiscussionList', ['flarum/Component', 'flarum
             if (this.props.params.q) {
               map.relevance = '';
             }
-            map.top = '-commentsCount';
             map.latest = '-lastTime';
+            map.top = '-commentsCount';
             map.newest = '-startTime';
             map.oldest = 'startTime';
 
